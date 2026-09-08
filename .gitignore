@@ -1,0 +1,25 @@
+# Variables y contraseñas locales
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Dependencias y archivos generados
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+coverage/
+
+# Logs y temporales
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Configuración del editor
+.vscode/*
+!.vscode/extensions.json
+.idea/

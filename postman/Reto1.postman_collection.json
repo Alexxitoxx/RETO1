@@ -1,0 +1,602 @@
+{
+  "info": {
+    "_postman_id": "0bc8437c-25b9-497b-b734-bc3d6def94f7",
+    "name": "Reto1",
+    "description": "Coleccion de pruebas manuales para las APIs CRUD v2 de Startups y Technologies. Todas las solicitudes pasan por el API Gateway en http://localhost:8080.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "58015932"
+  },
+  "item": [
+    {
+      "name": "Startups",
+      "item": [
+        {
+          "name": "Crear registro válido",
+          "request": {
+            "description": "Crea un registro de startup con datos validos. Esperado: 201 Created y el registro creado.",
+            "auth": {
+              "type": "inherit"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Demo Startup\",\r\n  \"foundedAt\": \"2024-01-15\",\r\n  \"location\": \"Ciudad de Mexico\",\r\n  \"category\": \"AI\",\r\n  \"fundingAmount\": 100000\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/v2/api/startups/create",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "startups",
+                "create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear registro inválido",
+          "request": {
+            "description": "Prueba la validacion de datos obligatorios y tipos incorrectos. Esperado: 400 Bad Request.",
+            "auth": {
+              "type": "inherit"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"\",\r\n  \"fundingAmount\": \"incorrecto\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/v2/api/startups/create",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "startups",
+                "create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar sin filtros",
+          "request": {
+            "description": "Lista todas las startups sin filtros. Esperado: 200 OK y un arreglo JSON.",
+            "auth": {
+              "type": "inherit"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/v2/api/startups/read",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "startups",
+                "read"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar con filtros",
+          "request": {
+            "description": "Consulta startups aplicando el filtro definido en la URL. Esperado: 200 OK.",
+            "auth": {
+              "type": "inherit"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/v2/api/startups/read?name=Tech",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "startups",
+                "read"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "Tech",
+                  "sortOrder": 0
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar con filtros",
+          "request": {
+            "description": "Obtiene el detalle de una startup usando su identificador. Esperado: 200 OK si existe.",
+            "auth": {
+              "type": "inherit"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/v2/api/startups/read/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "startups",
+                "read",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Leer detalle con ID incorrecto",
+          "request": {
+            "description": "Prueba la consulta de una startup inexistente. Esperado: 404 Not Found.",
+            "auth": {
+              "type": "inherit"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/v2/api/startups/read/5",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "startups",
+                "read",
+                "5"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar con campos permitidos",
+          "request": {
+            "description": "Actualiza una startup usando los campos permitidos. Esperado: 200 OK.",
+            "auth": {
+              "type": "inherit"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"TechNovaPrime\",\r\n  \"foundedAt\": \"2022-05-11\",\r\n  \"location\": \"Monterrey\",\r\n  \"category\": \"Fintech\",\r\n  \"fundingAmount\": 600000\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/v2/api/startups/update/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "startups",
+                "update",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar con campos no permitidos",
+          "request": {
+            "description": "Prueba el rechazo de campos no permitidos en la actualización. Esperado: 400 Bad Request.",
+            "auth": {
+              "type": "inherit"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"TechNovaPrime\",\r\n  \"foundedAt\": \"2022-05-11\",\r\n  \"location\": \"Monterrey\",\r\n  \"category\": \"Fintech\",\r\n  \"fundingAmount\": 600000\r\n  \"admin\": true\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/v2/api/startups/update/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "startups",
+                "update",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar un registro existente",
+          "request": {
+            "description": "Elimina una startup existente. Esperado: 204 No Content.",
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/v2/api/startups/delete/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "startups",
+                "delete",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar un registro inexistente",
+          "request": {
+            "description": "Prueba la eliminación de un registro inexistente. Esperado: 404 Not Found.",
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/v2/api/startups/read/5",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "startups",
+                "read",
+                "5"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Technologies",
+      "item": [
+        {
+          "name": "Crear registro válido",
+          "request": {
+            "description": "Crea un registro de technology con datos validos. Esperado: 201 Created y el registro creado.",
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Computer Vision\",\r\n  \"sector\": \"Healthcare\",\r\n  \"description\": \"Tecnologia para analizar imagenes medicas\",\r\n  \"adoptionLevel\": \"Alto\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/v2/api/technologies/create",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "technologies",
+                "create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear registro inválido",
+          "request": {
+            "description": "Prueba la validacion de campos obligatorios vacios. Esperado: 400 Bad Request.",
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"\",\r\n  \"sector\": \"\",\r\n  \"description\": \"\",\r\n  \"adoptionLevel\": \"\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/v2/api/technologies/create",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "technologies",
+                "create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar sin filtros",
+          "request": {
+            "description": "Lista todas las technologies sin filtros. Esperado: 200 OK y un arreglo JSON.",
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/v2/api/technologies/read",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "technologies",
+                "read"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar con filtros",
+          "request": {
+            "description": "Consulta technologies aplicando el filtro definido en la URL. Esperado: 200 OK.",
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/v2/api/technologies/read?sector=Finanzas",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "technologies",
+                "read"
+              ],
+              "query": [
+                {
+                  "key": "sector",
+                  "value": "Finanzas"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar con filtros",
+          "request": {
+            "description": "Obtiene el detalle de una technology usando su identificador. Esperado: 200 OK si existe.",
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/v2/api/technologies/read/3",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "technologies",
+                "read",
+                "3"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Leer detalle con ID incorrecto",
+          "request": {
+            "description": "Prueba la consulta de una technology inexistente. Esperado: 404 Not Found.",
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/v2/api/technologies/read/5",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "technologies",
+                "read",
+                "5"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar con campos permitidos",
+          "request": {
+            "description": "Actualiza una technology usando los campos permitidos. Esperado: 200 OK.",
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Machine Learning Avanzado\",\r\n  \"sector\": \"Inteligencia Artificial\",\r\n  \"description\": \"Aprendizaje automatico basado en datos\",\r\n  \"adoptionLevel\": \"Alto\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/v2/api/technologies/update/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "technologies",
+                "update",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar con campos no permitidos",
+          "request": {
+            "description": "Prueba el rechazo de campos no permitidos en la actualización. Esperado: 400 Bad Request.",
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Blockchain\",\r\n  \"sector\": \"Finanzas\",\r\n  \"description\": \"Registro distribuido\",\r\n  \"adoptionLevel\": \"Medio\",\r\n  \"admin\": true\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/v2/api/technologies/update/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "technologies",
+                "update",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar un registro existente",
+          "request": {
+            "description": "Elimina una technology existente. Esperado: 204 No Content.",
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/v2/api/technologies/delete/4",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "technologies",
+                "delete",
+                "4"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar un registro inexistente",
+          "request": {
+            "description": "Prueba la eliminación de una technology inexistente. Esperado: 404 Not Found.",
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/v2/api/technologies/delete/5",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "v2",
+                "api",
+                "technologies",
+                "delete",
+                "5"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+const express = require("express");
+const { Pool } = require("pg");
+require("dotenv").config();
+
+// Crea la instancia de la aplicación Express.
+const app = express();
+
+// Permite interpretar los cuerpos de las solicitudes como JSON.
+app.use(express.json());
+
+// Configura el grupo de conexiones usando las variables de entorno.
+const pool = new Pool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD
+});
+
+// Endpoint de salud para verificar que el servicio está activo.
+app.get("/health", (req, res) => {
+    res.json({
+        status: "ok"
+    });
+});
+
+// POST - Crear tecnología
+app.post("/v1/api/technologies/create", async (req, res) => {
+    const {
+        name,
+        sector,
+        description,
+        adoptionLevel
+    } = req.body;
+
+    if (!name || !sector || !description || !adoptionLevel) {
+        return res.status(400).json({
+            message: "All fields are required"
+        });
+    }
+
+    try {
+        const result = await pool.query(
+            `
+            INSERT INTO technologies
+            (
+                name,
+                sector,
+                description,
+                adoption_level
+            )
+            VALUES ($1, $2, $3, $4)
+            RETURNING *
+            `,
+            [
+                name,
+                sector,
+                description,
+                adoptionLevel
+            ]
+        );
+
+        res.status(201).json(result.rows[0]);
+
+    } catch (error) {
+        console.error("Error creating technology:", error);
+
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+});
+
+const technologyFields = ["name", "sector", "description", "adoptionLevel"];
+const adoptionLevels = ["Bajo", "Medio", "Alto", "low", "medium", "high"];
+
+// Valida los campos del contrato y admite niveles en español o inglés.
+function validateTechnology(body) {
+    const details = [];
+    const unknown = Object.keys(body || {}).filter((key) => !technologyFields.includes(key));
+    if (unknown.length) details.push(`Unknown fields: ${unknown.join(", ")}`);
+    for (const field of ["name", "sector", "description"]) if (!body || typeof body[field] !== "string" || !body[field].trim()) details.push(`${field} is required`);
+    if (!body || !adoptionLevels.includes(body.adoptionLevel)) details.push("adoptionLevel must be low, medium, high, Bajo, Medio or Alto");
+    return details;
+}
+
+function technologyView(row) {
+    // Convierte columnas snake_case a propiedades camelCase para el cliente.
+    return { id: row.id, name: row.name, sector: row.sector, description: row.description, adoptionLevel: row.adoption_level, createdAt: row.created_at, updatedAt: row.updated_at };
+}
+
+// Crea una tecnología con validación estricta en la versión v2.
+app.post("/v2/api/technologies/create", async (req, res) => {
+    const details = validateTechnology(req.body);
+    if (details.length) return res.status(400).json({ message: "Validation error", details });
+    try {
+        const result = await pool.query("INSERT INTO technologies (name, sector, description, adoption_level) VALUES ($1, $2, $3, $4) RETURNING *", [req.body.name.trim(), req.body.sector.trim(), req.body.description.trim(), req.body.adoptionLevel]);
+        res.status(201).json(technologyView(result.rows[0]));
+    } catch (error) {
+        console.error("Error creating technology v2:", error);
+        res.status(500).json({ message: "Internal server error", details: [] });
+    }
+});
+
+// Convierte errores de JSON inválido en una respuesta JSON consistente.
+app.use((error, req, res, next) => {
+    if (error instanceof SyntaxError && error.status === 400 && error.body !== undefined) {
+        return res.status(400).json({ message: "Validation error", details: ["Request body must be valid JSON"] });
+    }
+    next(error);
+});
+
+const PORT = 8005;
+
+app.listen(PORT, () => {
+    console.log(`CreateTechnologyService running on port ${PORT}`);
+});

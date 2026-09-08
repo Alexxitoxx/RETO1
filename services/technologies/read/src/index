@@ -1,0 +1,122 @@
+const express = require("express");
+const { Pool } = require("pg");
+require("dotenv").config();
+
+// Crea la instancia de la aplicación Express.
+const app = express();
+
+// Permite interpretar los cuerpos de las solicitudes como JSON.
+app.use(express.json());
+
+// Configura el grupo de conexiones usando las variables de entorno.
+const pool = new Pool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD
+});
+
+// Endpoint de salud para verificar que el servicio está activo.
+app.get("/health", (req, res) => {
+    res.json({
+        status: "ok"
+    });
+});
+
+// GET - Obtener todas las tecnologías
+app.get("/v1/api/technologies/read", async (req, res) => {
+    try {
+        const result = await pool.query(
+            "SELECT * FROM technologies ORDER BY id"
+        );
+
+        res.status(200).json(result.rows);
+
+    } catch (error) {
+        console.error("Error getting technologies:", error);
+
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+});
+
+// GET - Obtener tecnología por ID
+app.get("/v1/api/technologies/read/:id", async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const result = await pool.query(
+            "SELECT * FROM technologies WHERE id = $1",
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                message: "Technology not found"
+            });
+        }
+
+        res.status(200).json(result.rows[0]);
+
+    } catch (error) {
+        console.error("Error getting technology:", error);
+
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+});
+
+function technologyView(row) {
+    // Expone un formato estable para consumidores HTTP y oculta nombres internos de SQL.
+    return { id: row.id, name: row.name, sector: row.sector, description: row.description, adoptionLevel: row.adoption_level, createdAt: row.created_at, updatedAt: row.updated_at };
+}
+
+// Lista tecnologías y valida que solo se utilicen los filtros documentados.
+app.get("/v2/api/technologies/read", async (req, res) => {
+    const allowedFilters = ["sector", "adoptionLevel"];
+    const unknown = Object.keys(req.query).filter((key) => !allowedFilters.includes(key));
+    if (unknown.length) return res.status(400).json({ message: "Validation error", details: [`Unknown filters: ${unknown.join(", ")}`] });
+    try {
+        const values = [];
+        const conditions = [];
+        // Los parámetros se envían separados de la consulta para evitar SQL injection.
+        if (req.query.sector) { values.push(`%${req.query.sector}%`); conditions.push(`sector ILIKE $${values.length}`); }
+        if (req.query.adoptionLevel) { values.push(req.query.adoptionLevel); conditions.push(`adoption_level = $${values.length}`); }
+        const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+        const result = await pool.query(`SELECT * FROM technologies ${where} ORDER BY id`, values);
+        res.status(200).json(result.rows.map(technologyView));
+    } catch (error) {
+        console.error("Error getting technologies v2:", error);
+        res.status(500).json({ message: "Internal server error", details: [] });
+    }
+});
+
+// Busca una tecnología por ID después de validar que sea numérico.
+app.get("/v2/api/technologies/read/:id", async (req, res) => {
+    if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ message: "Validation error", details: ["id must be a positive integer"] });
+    try {
+        const result = await pool.query("SELECT * FROM technologies WHERE id = $1", [req.params.id]);
+        if (!result.rows.length) return res.status(404).json({ message: "Technology not found", details: [] });
+        res.status(200).json(technologyView(result.rows[0]));
+    } catch (error) {
+        console.error("Error getting technology v2:", error);
+        res.status(500).json({ message: "Internal server error", details: [] });
+    }
+});
+
+// Convierte errores de JSON inválido en una respuesta JSON consistente.
+app.use((error, req, res, next) => {
+    if (error instanceof SyntaxError && error.status === 400 && error.body !== undefined) {
+        return res.status(400).json({ message: "Validation error", details: ["Request body must be valid JSON"] });
+    }
+    next(error);
+});
+
+const PORT = 8007;
+
+app.listen(PORT, () => {
+    console.log(`ReadTechnologyService running on port ${PORT}`);
+});

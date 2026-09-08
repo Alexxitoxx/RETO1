@@ -1,0 +1,83 @@
+const express = require("express");
+const { Pool } = require("pg");
+require("dotenv").config();
+
+// Crea la instancia de la aplicación Express.
+const app = express();
+
+// Permite interpretar los cuerpos de las solicitudes como JSON.
+app.use(express.json());
+
+// Configura el grupo de conexiones usando las variables de entorno.
+const pool = new Pool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD
+});
+
+// Endpoint de salud para verificar que el servicio está activo.
+app.get("/health", (req, res) => {
+    res.json({
+        status: "ok"
+    });
+});
+
+app.delete("/v1/api/startups/delete/:id", async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const result = await pool.query(
+            `
+            DELETE FROM startups
+            WHERE id = $1
+            RETURNING *
+            `,
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                message: "Startup not found"
+            });
+        }
+
+        // 204 = eliminado correctamente sin contenido
+        res.status(204).send();
+
+    } catch (error) {
+        console.error("Error deleting startup:", error);
+
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+});
+
+// Elimina una startup v2 y conserva el código 204 cuando la operación es exitosa.
+app.delete("/v2/api/startups/delete/:id", async (req, res) => {
+    if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ message: "Validation error", details: ["id must be a positive integer"] });
+    try {
+        const result = await pool.query("DELETE FROM startups WHERE id = $1 RETURNING id", [req.params.id]);
+        if (!result.rows.length) return res.status(404).json({ message: "Startup not found", details: [] });
+        res.status(204).send();
+    } catch (error) {
+        console.error("Error deleting startup v2:", error);
+        res.status(500).json({ message: "Internal server error", details: [] });
+    }
+});
+
+// Convierte errores de JSON inválido en una respuesta JSON consistente.
+app.use((error, req, res, next) => {
+    if (error instanceof SyntaxError && error.status === 400 && error.body !== undefined) {
+        return res.status(400).json({ message: "Validation error", details: ["Request body must be valid JSON"] });
+    }
+    next(error);
+});
+
+const PORT = 8002;
+
+app.listen(PORT, () => {
+    console.log(`DeleteStartupService running on port ${PORT}`);
+});

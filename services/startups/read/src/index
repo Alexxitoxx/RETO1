@@ -1,0 +1,125 @@
+const express = require("express");
+const { Pool } = require("pg");
+require("dotenv").config();
+
+// Crea la instancia de la aplicación Express.
+const app = express();
+
+// Permite interpretar los cuerpos de las solicitudes como JSON.
+app.use(express.json());
+
+// Configura el grupo de conexiones usando las variables de entorno.
+const pool = new Pool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD
+});
+
+// Endpoint de salud para verificar que el servicio está activo.
+app.get("/health", (req, res) => {
+    res.json({
+        status: "ok"
+    });
+});
+
+// GET - Obtener todas las startups
+app.get("/v1/api/startups/read", async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT * FROM startups ORDER BY id`
+        );
+
+        res.status(200).json(result.rows);
+
+    } catch (error) {
+        console.error("Error getting startups:", error);
+
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+});
+
+// GET - Obtener una startup por ID
+app.get("/v1/api/startups/read/:id", async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const result = await pool.query(
+            `SELECT * FROM startups WHERE id = $1`,
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                message: "Startup not found"
+            });
+        }
+
+        res.status(200).json(result.rows[0]);
+
+    } catch (error) {
+        console.error("Error getting startup:", error);
+
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+});
+
+
+function startupView(row) {
+    // Convierte los nombres de columnas de PostgreSQL a los nombres del contrato HTTP.
+    const foundedAt = row.founded_at ? (row.founded_at instanceof Date ? row.founded_at.toISOString().slice(0, 10) : String(row.founded_at).slice(0, 10)) : null;
+    return { id: row.id, name: row.name, foundedAt, location: row.location, category: row.category, fundingAmount: row.funding_amount === null ? null : Number(row.funding_amount), createdAt: row.created_at, updatedAt: row.updated_at };
+}
+
+// Lista startups v2 y permite filtrar por nombre o categoría.
+app.get("/v2/api/startups/read", async (req, res) => {
+    const allowedFilters = ["name", "category"];
+    // Rechaza parámetros que no forman parte del contrato documentado.
+    const unknown = Object.keys(req.query).filter((key) => !allowedFilters.includes(key));
+    if (unknown.length) return res.status(400).json({ message: "Validation error", details: [`Unknown filters: ${unknown.join(", ")}`] });
+    try {
+        const values = [];
+        const conditions = [];
+        // Se usan parámetros SQL para evitar interpolar valores directamente en la consulta.
+        if (req.query.name) { values.push(`%${req.query.name}%`); conditions.push(`name ILIKE $${values.length}`); }
+        if (req.query.category) { values.push(`%${req.query.category}%`); conditions.push(`category ILIKE $${values.length}`); }
+        const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+        const result = await pool.query(`SELECT * FROM startups ${where} ORDER BY id`, values);
+        res.status(200).json(result.rows.map(startupView));
+    } catch (error) {
+        console.error("Error getting startups v2:", error);
+        res.status(500).json({ message: "Internal server error", details: [] });
+    }
+});
+
+// Obtiene una startup individual y valida el ID antes de consultar PostgreSQL.
+app.get("/v2/api/startups/read/:id", async (req, res) => {
+    if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ message: "Validation error", details: ["id must be a positive integer"] });
+    try {
+        const result = await pool.query("SELECT * FROM startups WHERE id = $1", [req.params.id]);
+        if (!result.rows.length) return res.status(404).json({ message: "Startup not found", details: [] });
+        res.status(200).json(startupView(result.rows[0]));
+    } catch (error) {
+        console.error("Error getting startup v2:", error);
+        res.status(500).json({ message: "Internal server error", details: [] });
+    }
+});
+
+// Convierte errores de JSON inválido en una respuesta JSON consistente.
+app.use((error, req, res, next) => {
+    if (error instanceof SyntaxError && error.status === 400 && error.body !== undefined) {
+        return res.status(400).json({ message: "Validation error", details: ["Request body must be valid JSON"] });
+    }
+    next(error);
+});
+
+const PORT = 8003;
+
+app.listen(PORT, () => {
+    console.log(`ReadStartupService running on port ${PORT}`);
+});

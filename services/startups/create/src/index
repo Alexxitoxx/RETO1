@@ -1,0 +1,128 @@
+const express = require("express");
+const { Pool } = require("pg");
+require("dotenv").config();
+
+// Crea la instancia de la aplicación Express.
+const app = express();
+
+// Permite interpretar los cuerpos de las solicitudes como JSON.
+app.use(express.json());
+
+// Configura el grupo de conexiones usando las variables de entorno.
+const pool = new Pool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD
+});
+
+// Endpoint de salud para verificar que el servicio está activo.
+app.get("/health", (req, res) => {
+    res.json({
+        status: "ok"
+    });
+});
+
+// Crea un nuevo registro de startup en la base de datos.
+app.post("/v1/api/startups/create", async (req, res) => {
+
+    // Extrae los datos enviados en el cuerpo de la solicitud.
+    const {
+        name,
+        foundedAt,
+        location,
+        category,
+        fundingAmount
+    } = req.body;
+
+    try {
+
+        // Inserta la startup y devuelve el registro creado.
+        const result = await pool.query(
+            `
+            INSERT INTO startups
+            (
+                name,
+                founded_at,
+                location,
+                category,
+                funding_amount
+            )
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+            `,
+            [
+                name,
+                foundedAt,
+                location,
+                category,
+                fundingAmount
+            ]
+        );
+
+        res.status(201).json(result.rows[0]);
+
+    } catch (error) {
+
+        // Registra el error y devuelve una respuesta genérica al cliente.
+        console.error(error);
+
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+});
+
+const startupFields = ["name", "foundedAt", "location", "category", "fundingAmount"];
+
+// Valida campos permitidos, campos obligatorios y tipos de datos del body v2.
+function validateStartup(body) {
+    const details = [];
+    const keys = Object.keys(body || {});
+    const unknown = keys.filter((key) => !startupFields.includes(key));
+    if (unknown.length) details.push(`Unknown fields: ${unknown.join(", ")}`);
+    if (!body || typeof body.name !== "string" || !body.name.trim()) details.push("name is required");
+    if (body && body.foundedAt !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(body.foundedAt)) details.push("foundedAt must use YYYY-MM-DD");
+    if (body && body.fundingAmount !== undefined && (typeof body.fundingAmount !== "number" || body.fundingAmount < 0)) details.push("fundingAmount must be a non-negative number");
+    return details;
+}
+
+function startupView(row) {
+    // Mantiene el contrato JSON en camelCase aunque la tabla use snake_case.
+    const foundedAt = row.founded_at ? (row.founded_at instanceof Date ? row.founded_at.toISOString().slice(0, 10) : String(row.founded_at).slice(0, 10)) : null;
+    return { id: row.id, name: row.name, foundedAt, location: row.location, category: row.category, fundingAmount: row.funding_amount === null ? null : Number(row.funding_amount), createdAt: row.created_at, updatedAt: row.updated_at };
+}
+
+// Crea una startup usando la versión validada del contrato.
+app.post("/v2/api/startups/create", async (req, res) => {
+    const details = validateStartup(req.body);
+    if (details.length) return res.status(400).json({ message: "Validation error", details });
+    try {
+        // La consulta parametrizada protege los valores enviados por el cliente.
+        const result = await pool.query(
+            "INSERT INTO startups (name, founded_at, location, category, funding_amount) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+            [req.body.name.trim(), req.body.foundedAt || null, req.body.location || null, req.body.category || null, req.body.fundingAmount ?? null]
+        );
+        res.status(201).json(startupView(result.rows[0]));
+    } catch (error) {
+        console.error("Error creating startup v2:", error);
+        res.status(500).json({ message: "Internal server error", details: [] });
+    }
+});
+
+// Convierte errores de JSON inválido en una respuesta JSON consistente.
+app.use((error, req, res, next) => {
+    if (error instanceof SyntaxError && error.status === 400 && error.body !== undefined) {
+        return res.status(400).json({ message: "Validation error", details: ["Request body must be valid JSON"] });
+    }
+    next(error);
+});
+
+// Puerto donde el servicio de creación de startups recibe solicitudes.
+const PORT = 8001;
+
+// Inicia el servidor HTTP después de registrar todas las rutas.
+app.listen(PORT, () => {
+    console.log(`CreateStartupService running on port ${PORT}`);
+});

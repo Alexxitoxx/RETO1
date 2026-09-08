@@ -1,7 +1,15 @@
+x-backend-environment: &backend-environment
+  DB_HOST: ${DB_HOST:-postgres}
+  DB_PORT: ${DB_PORT:-5432}
+  DB_NAME: ${DB_NAME:-reto1}
+  DB_USER: ${DB_USER:-postgres}
+  DB_PASSWORD: ${DB_PASSWORD:-postgres}
+
 services:
 
   create-startup:
     build: ./services/startups/create
+    environment: *backend-environment
     expose:
       - "8001"
     healthcheck:
@@ -15,6 +23,7 @@ services:
 
   read-startup:
     build: ./services/startups/read
+    environment: *backend-environment
     expose:
       - "8003"
     healthcheck:
@@ -28,6 +37,7 @@ services:
 
   update-startup:
     build: ./services/startups/update
+    environment: *backend-environment
     expose:
       - "8004"
     healthcheck:
@@ -41,6 +51,7 @@ services:
 
   delete-startup:
     build: ./services/startups/delete
+    environment: *backend-environment
     expose:
       - "8002"
     healthcheck:
@@ -54,6 +65,7 @@ services:
 
   create-technology:
     build: ./services/technologies/create
+    environment: *backend-environment
     expose:
       - "8005"
     healthcheck:
@@ -67,6 +79,7 @@ services:
 
   read-technology:
     build: ./services/technologies/read
+    environment: *backend-environment
     expose:
       - "8007"
     healthcheck:
@@ -80,6 +93,7 @@ services:
 
   update-technology:
     build: ./services/technologies/update
+    environment: *backend-environment
     expose:
       - "8008"
     healthcheck:
@@ -93,6 +107,7 @@ services:
 
   delete-technology:
     build: ./services/technologies/delete
+    environment: *backend-environment
     expose:
       - "8006"
     healthcheck:
@@ -151,9 +166,9 @@ services:
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: reto1
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-reto1}
     ports:
       - "5432:5432"
     healthcheck:

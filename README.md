@@ -60,7 +60,7 @@ reto1/
 └── evidencias/
 ```
 
-# 6. Requisitos previos
+# 6. Requisitos
 
 - Docker Desktop.
 - Docker Compose.
@@ -72,28 +72,49 @@ reto1/
 
 El archivo `.env.example` de la raíz contiene la configuración completa de referencia. Para el frontend existe además `frontend/.env.example`.
 
-Los servicios backend utilizan estas variables:
+Los servicios backend reciben estas variables desde Compose:
 
-env
+```env
 DB_HOST=postgres
 DB_PORT=5432
 DB_NAME=reto1
 DB_USER=postgres
 DB_PASSWORD=postgres
+```
 
 El frontend usa:
-env
+
+```env
 VITE_API_BASE_URL=http://localhost:8080/v2/api
+```
+
+Descripción de variables:
+
+| Variable | Descripción |
+|---|---|
+| `POSTGRES_USER` | Usuario que PostgreSQL crea al iniciar. |
+| `POSTGRES_PASSWORD` | Contraseña local de PostgreSQL. No usar una contraseña real en Git. |
+| `POSTGRES_DB` | Nombre de la base de datos inicial. |
+| `POSTGRES_PORT` | Puerto publicado de PostgreSQL en el host. |
+| `GATEWAY_PORT` | Puerto publicado del API Gateway. |
+| `FRONTEND_PORT` | Puerto publicado del frontend. |
+| `VITE_API_BASE_URL` | URL base que React usa para consumir la API. |
+| `DB_HOST` | Nombre DNS del contenedor PostgreSQL dentro de Docker. |
+| `DB_PORT` | Puerto interno de PostgreSQL para los microservicios. |
+| `DB_NAME` | Base que consultan los microservicios. |
+| `DB_USER` | Usuario de conexión de los microservicios. |
+| `DB_PASSWORD` | Contraseña de conexión de los microservicios. |
 
 
-# 8. Instrucciones exactas para levantar localmente
+# 8. Cómo correr localmente
 
 Desde la raíz del proyecto:
 
-powershell
+```powershell
 copy .env.example .env
 docker compose up -d --build
 docker compose ps
+```
 
 
 Verificar que los contenedores aparezcan como `healthy`. Después abrir `http://localhost:5173` y probar el gateway. Para detener y eliminar también el volumen de PostgreSQL:
@@ -128,7 +149,7 @@ Puertos internos:
 | ReadTechnologyService | 8007 |
 | UpdateTechnologyService | 8008 |
 
-## 10. Contratos de API
+## 10. Rutas de API
 
 La versión recomendada es `v2`, que valida campos, permite filtros y devuelve propiedades en `camelCase`. Las rutas `v1` se conservan para compatibilidad.
 
@@ -210,13 +231,30 @@ Códigos esperados:
 
 ## 12. Cómo desplegar
 
+Plataforma utilizada: Docker Desktop con Docker Compose en entorno local. No se ha contratado un despliegue público; por tanto, las URLs entregadas son locales.
+
+Orden de despliegue:
+
+1. PostgreSQL inicia y debe estar `healthy`.
+2. Los ocho microservicios esperan a PostgreSQL y ejecutan su healthcheck.
+3. Nginx Gateway espera a los ocho servicios saludables.
+4. El frontend espera al gateway y se sirve con Vite Preview.
+
 Para ejecución local:
 
-```powershell
+powershell
 docker compose up -d --build
-```
 
-El orden lógico de los componentes es PostgreSQL, microservicios, gateway y frontend. Docker Compose crea la red interna y resuelve los servicios por nombre.
+
+Docker Compose crea la red interna y resuelve los servicios por nombre. CORS permite los orígenes locales `localhost:5173`, `localhost:3000` y `localhost:3001`; en producción debe reemplazarse por el dominio real.
+
+Validación del despliegue:
+
+```powershell
+docker compose ps
+Invoke-WebRequest -UseBasicParsing http://localhost:8080/status
+Invoke-WebRequest -UseBasicParsing http://localhost:5173
+```
 
 ## 13. Pruebas manuales
 
@@ -243,46 +281,53 @@ Pruebas mínimas para cada dominio:
 
 Repetir las mismas pruebas sustituyendo `startups` por `technologies`. Para POST y PUT seleccionar `Body > raw > JSON`.
 
+Objetivo, request y evidencia:
+
+- Las pruebas de creación comprueban `201` y validación `400`; guardar la respuesta en `evidencias/capturas/`.
+- Las pruebas de lectura comprueban listado, filtros y detalle por ID; guardar URL, status y body.
+- Las pruebas de actualización comprueban `PUT 200` y rechazo de campos desconocidos `400`.
+- Las pruebas de eliminación comprueban `DELETE 204` y `DELETE 404` para un ID inexistente.
+- La colección completa está en `postman/Reto1.postman_collection.json`.
+
 JSON inválido de prueba:
 
-```json
+    json
 {
   "name": "Registro sin cerrar
 }
-```
 
 Respuesta esperada:
 
-```json
+    json
 {
   "message": "Validation error",
   "details": ["Request body must be valid JSON"]
 }
-```
 
-## 14. Evidencias
+# 14. Evidencias
 
 Las capturas de la interfaz y de Postman se guardan en `evidencias/capturas/`. Cada evidencia debe mostrar método, URL, body cuando aplique, status HTTP y respuesta. La colección documentada está en `postman/Reto1.postman_collection.json`.
 
-## 15. Limitaciones conocidas
+# 15. Limitaciones conocidas
 
 - No hay autenticación.
 - No hay despliegue público ni URL externa.
 - La autenticación no está implementada porque no forma parte del alcance obligatorio.
 - Las validaciones están implementadas en cada servicio y podrían extraerse a una librería compartida en una iteración futura.
 
-## 16. Siguientes pasos
+# 16. Siguientes pasos
 
 - Automatizar las pruebas de contrato.
 - Añadir filtros avanzados y paginación.
 - Configurar variables de entorno separadas para producción.
 - Añadir autenticación y autorización si el sistema se publica.
 
-## 17. Información del repositorio Git
+# 17. Información del repositorio Git
 
 - Repositorio: https://github.com/Alexxitoxx/RETO1
 - Rama principal: `main`
-- Commit final actual: `a5a7e15 Integrar historial inicial de GitHub`
+- Commit final sugerido: `36b6075 Actualizar documentacion del repositorio`
+- Observación: el commit anterior de integración es `a5a7e15`; el commit sugerido contiene la documentación Git actualizada.
 - Clonado:
 
 ```powershell
@@ -292,7 +337,7 @@ copy .env.example .env
 docker compose up -d --build
 ```
 
-## 18. Rúbrica de evaluación
+# 18. Rúbrica de evaluación
 
 Funcionamiento (CRUDs) — 30%  
 Código y orden (estructura, validación, errores) — 25%  

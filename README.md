@@ -72,6 +72,8 @@ reto1/
 
 El archivo `.env.example` de la raíz contiene la configuración completa de referencia. Para el frontend existe además `frontend/.env.example`.
 
+No es necesario crear ni copiar un `.env` dentro de cada API. Los ocho microservicios reciben `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD` mediante `docker-compose.yml`. Solo se copia una vez el archivo `.env.example` de la raíz.
+
 Los servicios backend reciben estas variables desde Compose:
 
 ```env
@@ -115,6 +117,8 @@ copy .env.example .env
 docker compose up -d --build
 docker compose ps
 ```
+
+El archivo `.env` raíz es el único archivo local obligatorio para Docker. Los archivos `.env` que puedan existir dentro de `services/` son locales, quedan ignorados por Git y no deben copiarse para una instalación nueva.
 
 
 Verificar que los contenedores aparezcan como `healthy`. Después abrir `http://localhost:5173` y probar el gateway. Para detener y eliminar también el volumen de PostgreSQL:

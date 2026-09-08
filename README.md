@@ -268,7 +268,7 @@ Las capturas de la interfaz y de Postman se guardan en `evidencias/capturas/`. C
 
 - No hay autenticación.
 - No hay despliegue público ni URL externa.
-- La entrega se mantiene local y no se subirá a Git.
+- La autenticación no está implementada porque no forma parte del alcance obligatorio.
 - Las validaciones están implementadas en cada servicio y podrían extraerse a una librería compartida en una iteración futura.
 
 ## 16. Siguientes pasos
@@ -280,7 +280,17 @@ Las capturas de la interfaz y de Postman se guardan en `evidencias/capturas/`. C
 
 ## 17. Información del repositorio Git
 
-Por decisión del equipo, el proyecto no se subirá a Git. La revisión se realizará sobre la carpeta local ejecutable.
+- Repositorio: https://github.com/Alexxitoxx/RETO1
+- Rama principal: `main`
+- Commit final actual: `a5a7e15 Integrar historial inicial de GitHub`
+- Clonado:
+
+```powershell
+git clone https://github.com/Alexxitoxx/RETO1.git
+cd RETO1
+copy .env.example .env
+docker compose up -d --build
+```
 
 ## 18. Rúbrica de evaluación
 

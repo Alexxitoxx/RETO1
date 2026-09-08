@@ -1,0 +1,229 @@
+RETO 1 - COMO EJECUTAR EL PROYECTO LOCALMENTE
+================================================
+
+1. REQUISITOS
+-------------
+
+Instalar previamente:
+
+- Git
+- Docker Desktop
+- Docker Compose, incluido en Docker Desktop
+- Postman, si se desean ejecutar las pruebas de API
+
+Verificar las instalaciones:
+
+    git --version
+    docker --version
+    docker compose version
+
+
+2. DESCARGAR EL PROYECTO
+------------------------
+
+Clonar el repositorio desde GitHub:
+
+    git clone https://github.com/Alexxitoxx/RETO1.git
+
+Entrar a la carpeta del proyecto:
+
+    cd RETO1
+
+Usar la rama principal:
+
+    git checkout main
+
+
+3. CONFIGURAR VARIABLES DE ENTORNO
+----------------------------------
+
+El archivo `.env.example` es una plantilla. Debes crear una copia llamada `.env` en la misma carpeta raiz del proyecto.
+
+Antes:
+
+    RETO1/.env.example
+
+Despues:
+
+    RETO1/.env
+
+Ejecutar el comando desde la carpeta `RETO1`:
+
+    copy .env.example .env
+
+En PowerShell tambien se puede usar:
+
+    Copy-Item .env.example .env
+
+Docker Compose lee el archivo `RETO1/.env` y pasa sus valores a PostgreSQL y a los ocho microservicios. No debes copiarlo dentro de `services/startups` ni dentro de `services/technologies`.
+
+El archivo `.env` contiene configuracion local y no debe subirse a GitHub. El archivo `.env.example` si se puede subir porque es solo una plantilla.
+
+
+4. LEVANTAR TODO EL SISTEMA
+---------------------------
+
+Desde la carpeta raiz RETO1 ejecutar:
+
+    docker compose up -d --build
+
+Este comando crea y levanta:
+
+- PostgreSQL
+- CreateStartupService
+- ReadStartupService
+- UpdateStartupService
+- DeleteStartupService
+- CreateTechnologyService
+- ReadTechnologyService
+- UpdateTechnologyService
+- DeleteTechnologyService
+- API Gateway Nginx
+- Frontend React
+
+La primera ejecucion puede tardar porque Docker descarga imagenes y construye los contenedores.
+
+
+5. VERIFICAR LOS CONTENEDORES
+-----------------------------
+
+Ejecutar:
+
+    docker compose ps
+
+Los servicios deben aparecer como Up y healthy.
+
+Si un servicio no aparece saludable, revisar sus logs:
+
+    docker compose logs gateway
+    docker compose logs frontend
+    docker compose logs read-startup
+
+Para ver los logs de todos los servicios:
+
+    docker compose logs -f
+
+
+6. ABRIR LA APLICACION
+----------------------
+
+Frontend:
+
+    http://localhost:5173
+
+API Gateway:
+
+    http://localhost:8080
+
+Estado del gateway:
+
+    http://localhost:8080/status
+
+La respuesta esperada del status es:
+
+    {"status":"ok"}
+
+
+7. PROBAR LA API
+----------------
+
+Listar startups:
+
+    http://localhost:8080/v2/api/startups/read
+
+Listar technologies:
+
+    http://localhost:8080/v2/api/technologies/read
+
+En Postman se puede importar la coleccion:
+
+    postman/Reto1.postman_collection.json
+
+La variable baseUrl de Postman debe ser:
+
+    http://localhost:8080/v2/api
+
+
+8. PROBAR EL FRONTEND
+---------------------
+
+Desde http://localhost:5173 se pueden probar los dos modulos:
+
+- Startups
+- Tecnologias
+
+Operaciones disponibles:
+
+- Listar registros
+- Filtrar registros
+- Crear registros
+- Consultar detalle por ID
+- Editar registros
+- Eliminar registros
+
+
+9. DETENER EL SISTEMA
+---------------------
+
+Detener los contenedores sin borrar los datos:
+
+    docker compose down
+
+Detener los contenedores y borrar el volumen de PostgreSQL:
+
+    docker compose down -v
+
+ATENCION: docker compose down -v elimina la base de datos local y los datos del seed tendran que crearse otra vez al levantar el sistema.
+
+
+10. ACTUALIZAR EL PROYECTO
+--------------------------
+
+Para descargar cambios nuevos desde GitHub:
+
+    git pull origin main
+
+Despues reconstruir los contenedores:
+
+    docker compose up -d --build
+
+
+11. PROBLEMAS COMUNES
+---------------------
+
+Si el puerto 5173 esta ocupado, cerrar el proceso que lo usa o cambiar el puerto publicado en docker-compose.yml.
+
+Si el puerto 8080 esta ocupado, cambiar el puerto publicado del gateway en docker-compose.yml.
+
+Si la API devuelve 502, verificar que todos los microservicios esten healthy:
+
+    docker compose ps
+
+Si la base parece vacia y se uso down -v, volver a levantar con:
+
+    docker compose up -d --build
+
+La base se inicializa con:
+
+- db/migrations/001_init.sql
+- db/seed.sql
+
+
+12. ESTRUCTURA DE URLS
+----------------------
+
+Frontend local:
+
+    http://localhost:5173
+
+Gateway local:
+
+    http://localhost:8080
+
+API v2:
+
+    http://localhost:8080/v2/api
+
+Repositorio:
+
+    https://github.com/Alexxitoxx/RETO1

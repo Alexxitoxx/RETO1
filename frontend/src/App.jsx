@@ -92,7 +92,10 @@ function App() {
   const saveItem = async (formData) => {
     const editing = editor?.mode === 'edit'
     const path = editing ? `${API_BASE_URL}/${config.endpoint}/update/${editor.item.id}` : `${API_BASE_URL}/${config.endpoint}/create`
-    const response = await fetch(path, { method: editing ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
+    const payload = config.endpoint === 'startups'
+      ? { ...formData, fundingAmount: formData.fundingAmount === '' ? undefined : Number(formData.fundingAmount) }
+      : formData
+    const response = await fetch(path, { method: editing ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     const body = await response.json().catch(() => ({}))
     if (!response.ok) throw new Error(body.message || 'No se pudo guardar el registro')
     setEditor(null)

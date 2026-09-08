@@ -76,19 +76,18 @@ No es necesario crear ni copiar un `.env` dentro de cada API. Los ocho microserv
 
 Los servicios backend reciben estas variables desde Compose:
 
-```env
+env
 DB_HOST=postgres
 DB_PORT=5432
 DB_NAME=reto1
 DB_USER=postgres
 DB_PASSWORD=postgres
-```
 
 El frontend usa:
 
-```env
+env
 VITE_API_BASE_URL=http://localhost:8080/v2/api
-```
+
 
 Descripción de variables:
 
@@ -110,22 +109,24 @@ Descripción de variables:
 
 # 8. Cómo correr localmente
 
+Descargar proyecto de github
+
 Desde la raíz del proyecto:
 
-```powershell
+powershell
 copy .env.example .env
 docker compose up -d --build
 docker compose ps
-```
+
 
 El archivo `.env` raíz es el único archivo local obligatorio para Docker. Los archivos `.env` que puedan existir dentro de `services/` son locales, quedan ignorados por Git y no deben copiarse para una instalación nueva.
 
 
-Verificar que los contenedores aparezcan como `healthy`. Después abrir `http://localhost:5173` y probar el gateway. Para detener y eliminar también el volumen de PostgreSQL:
+Verificar que los contenedores aparezcan como `healthy`. Después abrir `http://localhost:5173` y probar el gateway. 
 
-```powershell
+
 docker compose down -v
-```
+
 
 ## 9. URLs y puertos
 
@@ -153,30 +154,25 @@ Puertos internos:
 | ReadTechnologyService | 8007 |
 | UpdateTechnologyService | 8008 |
 
-## 10. Rutas de API
+# 10. Rutas de API
 
 La versión recomendada es `v2`, que valida campos, permite filtros y devuelve propiedades en `camelCase`. Las rutas `v1` se conservan para compatibilidad.
 
-### Startups
+ Startups
 
-```text
 POST   /v2/api/startups/create
 GET    /v2/api/startups/read
 GET    /v2/api/startups/read/:id
 PUT    /v2/api/startups/update/:id
-DELETE /v2/api/startups/delete/:id
-```
+DELETE /v2/api/startups/delete/:id¿
 
 Filtros:
 
-```text
 GET /v2/api/startups/read?name=Tech
-GET /v2/api/startups/read?category=Fintech
-```
 
 Body de startup:
 
-```json
+json
 {
   "name": "OpenAI Ventures",
   "foundedAt": "2018-03-20",
@@ -184,11 +180,11 @@ Body de startup:
   "category": "AI",
   "fundingAmount": 2500000
 }
-```
 
-### Technologies
 
-```text
+ Technologies
+
+text
 POST   /v2/api/technologies/create
 GET    /v2/api/technologies/read
 GET    /v2/api/technologies/read/:id
@@ -198,21 +194,20 @@ DELETE /v2/api/technologies/delete/:id
 
 Filtros:
 
-```text
 GET /v2/api/technologies/read?sector=Healthcare
 GET /v2/api/technologies/read?adoptionLevel=Alto
-```
+
 
 Body de technology:
 
-```json
+json
 {
   "name": "Computer Vision",
   "sector": "Healthcare",
   "description": "Tecnologia para analizar imagenes medicas",
   "adoptionLevel": "Alto"
 }
-```
+
 
 Códigos esperados:
 
@@ -223,7 +218,7 @@ Códigos esperados:
 - `404 Not Found`: recurso inexistente.
 - `500 Internal Server Error`: error interno.
 
-## 11. Flujo del frontend
+# 11. Flujo del frontend
 
 1. Abrir `http://localhost:5173`.
 2. Elegir `Startups` o `Tecnologias` en el menú lateral.
@@ -254,19 +249,19 @@ Docker Compose crea la red interna y resuelve los servicios por nombre. CORS per
 
 Validación del despliegue:
 
-```powershell
+powershell
 docker compose ps
 Invoke-WebRequest -UseBasicParsing http://localhost:8080/status
 Invoke-WebRequest -UseBasicParsing http://localhost:5173
-```
 
-## 13. Pruebas manuales
+
+# 13. Pruebas manuales
 
 Crear una variable de entorno o de colección:
 
-```text
+text
 baseUrl = http://localhost:8080/v2/api
-```
+
 
 Pruebas mínimas para cada dominio:
 
@@ -334,12 +329,9 @@ Las capturas de la interfaz y de Postman se guardan en `evidencias/capturas/`. C
 - Observación: el commit anterior de integración es `a5a7e15`; el commit sugerido contiene la documentación Git actualizada.
 - Clonado:
 
-```powershell
+`powershell
 git clone https://github.com/Alexxitoxx/RETO1.git
-cd RETO1
-copy .env.example .env
-docker compose up -d --build
-```
+
 
 # 18. Rúbrica de evaluación
 
